@@ -75,6 +75,7 @@ type Config msg
     = Config
         { toMsg : Msg -> msg
         , view : State -> Config msg -> Set String -> Html msg
+        , allowEdits : Bool
         }
 
 
@@ -97,6 +98,7 @@ view function.
 -}
 config :
     (Msg -> msg)
+    -> Bool
     ->
         ({ tags : List String
          , selectedIndex : Maybe Int
@@ -114,7 +116,7 @@ config :
          -> Html msg
         )
     -> Config msg
-config toMsg viewFunc =
+config toMsg allowEdits viewFunc =
     let
         view =
             \(State state) (Config config) completeTags ->
@@ -126,14 +128,14 @@ config toMsg viewFunc =
                     , completeTags = completeTags
                     , focusTagger = SetIsFocused >> toMsg
                     , inputTagger = SetPendingTag >> toMsg
-                    , keyTagger = keyHandler (State state) >> toMsg
+                    , keyTagger = keyHandler (Config config) (State state) >> toMsg
                     , tagSelectKeyboardTagger = EditTag True >> toMsg
                     , tagSelectMouseTagger = EditTag False >> toMsg
                     , tagDeleteTagger = DeleteTag >> toMsg
                     , submitMsg = CommitPendingTag |> toMsg
                     }
     in
-    Config { toMsg = toMsg, view = view }
+    Config { toMsg = toMsg, allowEdits = allowEdits, view = view }
 
 
 {-| Return the list of tags currently being displayed by the input, including
@@ -255,8 +257,8 @@ view state (Config config) completeLabels =
     config.view state (Config config) completeLabels
 
 
-keyHandler : State -> number -> Msg
-keyHandler (State state) k =
+keyHandler : Config msg -> State -> number -> Msg
+keyHandler (Config config) (State state) k =
     -- If there is no pending input text, use the keyboard to navigate the
     -- existing labels.
     if not (String.isEmpty state.pendingTag) then
@@ -288,13 +290,19 @@ keyHandler (State state) k =
                         DeleteTag i
 
                     Nothing ->
-                        EditTag False (List.length state.tags - 1)
+                        if config.allowEdits then
+                            EditTag False (List.length state.tags - 1)
+                        else
+                            DeleteTag (List.length state.tags - 1)
 
-            -- Enter: edit selected tag.
+            -- Enter: edit or delete selected tag.
             13 ->
                 case state.selectedIndex of
                     Just i ->
-                        EditTag True i
+                        if config.allowEdits then
+                            EditTag True i
+                        else
+                            DeleteTag i
 
                     Nothing ->
                         NoOp

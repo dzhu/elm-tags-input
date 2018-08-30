@@ -71,9 +71,10 @@ bulmaTagsView tagToMsg deleteToMsg allActive activeIndex tags =
 fit in a [Bulma](https://bulma.io) page, with the given message tagger and extra
 attributes on the text input.
 -}
-configForBulma : (Msg -> msg) -> List (Attribute msg) -> Config msg
-configForBulma toMsg attributes =
+configForBulma : (Msg -> msg) -> Bool -> List (Attribute msg) -> Config msg
+configForBulma toMsg allowEdits attributes =
     config toMsg
+        allowEdits
         (\viewInput ->
             -- Use keyed HTML so that the input is not replaced and retains focus after
             -- being submitted.
