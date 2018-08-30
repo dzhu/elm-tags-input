@@ -4,6 +4,7 @@ module TagsInput
         , Msg
         , State
         , config
+        , getCommittedTags
         , getTags
         , initialState
         , update
@@ -31,7 +32,7 @@ See TagsInput.Views for predefined views.
 
 # Output
 
-@docs getTags
+@docs getTags, getCommittedTags
 
 
 # Types
@@ -136,8 +137,9 @@ config toMsg viewFunc =
 
 
 {-| Return the list of tags currently being displayed by the input, including
-the text currently being edited. The result includes no duplicates but preserves
-the order in which the tags are displayed.
+the text currently being edited (if it is not empty and not already one of the
+tags being displayed). The result includes no duplicates but preserves the order
+in which the tags are displayed.
 -}
 getTags : State -> List String
 getTags (State state) =
@@ -150,6 +152,15 @@ getTags (State state) =
             else
                 [ state.pendingTag ]
            )
+
+
+{-| Return the list of tags currently being displayed by the input, not
+including the text currently being edited. The result includes no duplicates but
+preserves the order in which the tags are displayed.
+-}
+getCommittedTags : State -> List String
+getCommittedTags (State state) =
+    state.tags
 
 
 {-| Update the internal state of the input.
